@@ -28,6 +28,17 @@ AEGIS-MESH is a **research and education platform** for studying distributed res
 
 AEGIS-MESH moves away from the "symmetric grid" approach of placing identical sensors everywhere. Instead, it employs a **Hybrid Node Strategy** that optimizes for cost, power, and information density.
 
+### The Core Thesis: Sensing vs. Identification
+
+The fundamental design error in traditional smart-home systems is conflating **Sensing** (continuous state observation) with **Identification** (discrete entity recognition).
+
+*   **Sensing (Continuous):** Monitoring state, motion, position, and behavior. This requires high temporal resolution, robustness to environment (lighting, fog, occlusion), and low latency. It is best performed by non-imaging sensors.
+*   **Identification (Discrete):** Determining *who* a specific individual is. This traditionally requires high spatial resolution (imagery) but is an episodic query, not a continuous state.
+
+AEGIS-MESH separates these functions physically and logically:
+1.  **Always-On Sensing Layer:** Non-imaging sensors (LiDAR, Radar, Acoustic) running continuously to track geometry, motion, and behavior.
+2.  **Identity Layer (Integrated):** Visual/biometric sensors that are capable of 24/7 operation but are strictly **policy-driven** and **hardware-isolated**.
+
 ### The Hybrid Node Strategy
 
 Different areas of a home have different sensing requirements. AEGIS-MESH uses three distinct node classes:
@@ -44,7 +55,7 @@ Different areas of a home have different sensing requirements. AEGIS-MESH uses t
 
 3.  **Identity Nodes (Configurable Policy)**
     *   **Location:** Entry points or specific verification zones.
-    *   **Hardware:** Low-resolution camera or biometric sensor.
+    *   **Hardware:** **Configurable Visual/Biometric Sensor** (Resolution and capabilities determined by research needs).
     *   **Role:** Identification (Who is this?). These nodes can operate in **Privacy-First mode** (disabled) or **Security-First mode** (automatically triggered by the Sensing Layer).
 
 ---
@@ -70,7 +81,7 @@ The sensing stack is layered to balance power consumption against information fi
 ├──────────────────────────────────────────────────────────────┤
 │  Identity Layer (Policy-Driven)                              │
 │  ───────────────────────────                                 │
-│  Local Face Recognition / Biometrics                         │
+│  Configurable Visual / Biometric Module                      │
 │  Modes: Passive (Privacy) OR Automatic (Sensing-Triggered)   │
 │  Hardware Kill Switch REQUIRED on all Identity Nodes         │
 └──────────────────────────────────────────────────────────────┘
@@ -78,12 +89,12 @@ The sensing stack is layered to balance power consumption against information fi
 
 ### Sensor Fusion & Physics
 
-A core research contribution of AEGIS-MESH is the fusion of complementary modalities:
+A core research contribution of AEGIS-MESH is the fusion of complementary modalities to create a "Physics-Based Identification" system that works where cameras fail.
 
 *   **LiDAR vs. Full Echo Acoustic:**
-    *   **LiDAR** provides high-resolution surface geometry but fails in smoke, fog, or steam.
+    *   **LiDAR** provides high-resolution **surface geometry** but fails in smoke, fog, or steam. It creates a precise "skeleton" of the room and objects.
     *   **Full Echo Acoustic** analyzes the *entire* reflected sound waveform. It penetrates smoke/fog and reveals **material density** (e.g., distinguishing a glass break from a plastic drop) and **internal structure**.
-    *   **Fusion Logic:** The system uses LiDAR for shape and Acoustic for material classification/robustness.
+    *   **Fusion Logic:** The system uses LiDAR for shape and Acoustic for material classification/robustness. Together, they identify objects ("Human holding a glass") without imagery.
 
 *   **Event-Based Triggering:**
     *   Neuromorphic event cameras have microsecond latency but lower spatial resolution. They act as a "trigger," waking up the LiDAR for a high-res scan only when rapid motion is detected, saving power and optimizing bandwidth.
@@ -109,6 +120,7 @@ Cameras are strictly **excluded** from the primary sensing mesh to preserve the 
 **Architectural Safeguards:**
 *   **Hardware Kill Switch:** Every Identity Node features a physical switch that cuts power to the sensor. This overrides all software policies.
 *   **Isolation:** Identity nodes run on separate physical hardware links from the mesh.
+*   **No Constraints on Specs:** The visual sensor is **configurable**. The architecture supports research into various optical setups (FOV, resolution, frame rate) depending on the processing power available.
 
 ---
 
@@ -143,8 +155,8 @@ The system optimizes for **resilience to layout change** rather than brute-force
 
 AEGIS-MESH is designed to be private by architecture, but flexible in connectivity.
 
-### Local-First, Cloud-Ready
-The system operates fully offline. It does not *require* internet to function. However, it is designed for integration:
+### Connectivity Agnostic (Local-First, Cloud-Ready)
+The system operates fully offline. It does not *require* internet to function. However, it is architected for integration:
 
 *   **API-Ready:** The edge controller exposes secure API endpoints. Users can integrate the system with Home Assistant, OpenHAB, or custom cloud dashboards.
 *   **User-Controlled Egress:** The decision to expose data to the internet is strictly the user's. The default configuration blocks external traffic; the user must explicitly enable remote access.
@@ -168,10 +180,10 @@ aegis-mesh/
 │   │   ├── node_placement_guide.md
 │   │   └── adaptive_remap.md
 │   ├── theory/
+│   │   ├── camera_free_sensing.md      # Architectural argument (Sensing vs ID)
 │   │   ├── sensor_fusion.md           # LiDAR vs Acoustic Physics
 │   │   ├── occlusion_driven_placement.md
-│   │   ├── privacy_threat_model.md
-│   │   └── camera_free_sensing.md     # Architectural argument
+│   │   └── privacy_threat_model.md
 │   ├── api/
 │   └── assets/
 ├── hardware/
