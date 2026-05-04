@@ -1,6 +1,6 @@
 # AEGIS-MESH — Distributed Residential Sensing Research Platform
 
-**A privacy-first, geometry-driven distributed perception mesh for residential awareness. AEGIS-MESH fuses LiDAR, mmWave radar, and neuromorphic sensing to answer critical awareness questions—presence, occupancy, anomaly, and identity—without relying on continuous video surveillance.**
+**A privacy-first, geometry-driven distributed perception mesh for residential awareness. AEGIS-MESH fuses LiDAR, mmWave radar, and neuromorphic sensing to answer critical awareness questions—presence, occupancy, anomaly, and identity—without relying on continuous video surveillance by default.**
 
 [![License: MIT](https://img.shields.io/badge/Code-MIT-blue.svg)](#license)
 [![License: CERN OHL](https://img.shields.io/badge/Hardware-CERN%20OHL--S%20v2-green.svg)](#license)
@@ -11,16 +11,16 @@
 
 ## Scope
 
-AEGIS-MESH is a **research and education platform** for studying distributed residential perception. It provides the architecture, firmware reference implementations, software stack, and protocol specifications for building a privacy-preserving sensor mesh.
+AEGIS-MESH is a **research and education platform** for studying distributed residential perception. It provides the architecture, firmware reference implementations, software stack, and protocol specifications for building a high-fidelity sensor mesh.
 
 **Key Thesis:** *Most actionable residential awareness needs—presence, tracking, fall detection, and intrusion—can be solved with higher reliability and better privacy using a distributed mesh of non-imaging sensors than with traditional cameras.*
 
-**Intended Audience:** Hobbyists, makers, privacy researchers, and educators.
+**Intended Audience:** Hobbyists, makers, privacy researchers, educators, and integrators.
 
 **Disclaimers:**
 *   **Not a certified life-safety product.** It is not UL-listed or CE-marked for safety functions.
 *   **Not a substitute for smoke/CO detectors** or monitored alarm systems.
-*   **Not a surveillance system.** The architecture prohibits persistent video recording by default.
+*   **Capability vs. Certification:** While the system is *capable* of 24/7 monitoring and automated alerting, the maintainers do not certify it for life-safety applications. The user assumes responsibility for validating configurations for their specific jurisdiction and use case.
 
 ---
 
@@ -42,10 +42,10 @@ Different areas of a home have different sensing requirements. AEGIS-MESH uses t
     *   **Hardware:** Solid-State LiDAR + mmWave Radar + Microphone Arrays.
     *   **Role:** Tracking *position* and *geometry* within the space. They handle the "Where exactly are they?" and "What is the shape of the room?" questions.
 
-3.  **Identity Nodes (Optional / Opt-In)**
+3.  **Identity Nodes (Configurable Policy)**
     *   **Location:** Entry points or specific verification zones.
     *   **Hardware:** Low-resolution camera or biometric sensor.
-    *   **Role:** Strictly **Identification Only**. These nodes are hardware-isolated (see [Identity Layer](#identity-layer-opt-in)).
+    *   **Role:** Identification (Who is this?). These nodes can operate in **Privacy-First mode** (disabled) or **Security-First mode** (automatically triggered by the Sensing Layer).
 
 ---
 
@@ -68,9 +68,10 @@ The sensing stack is layered to balance power consumption against information fi
 │  Solid-state LiDAR (geometry, precise tracking)              │
 │  Neuromorphic Event Sensors (microsecond motion detection)   │
 ├──────────────────────────────────────────────────────────────┤
-│  Identity Layer (Opt-In Only)                                │
+│  Identity Layer (Policy-Driven)                              │
 │  ───────────────────────────                                 │
-│  Local Face Recognition / Biometrics (off-network, isolated) │
+│  Local Face Recognition / Biometrics                         │
+│  Modes: Passive (Privacy) OR Automatic (Sensing-Triggered)   │
 │  Hardware Kill Switch REQUIRED on all Identity Nodes         │
 └──────────────────────────────────────────────────────────────┘
 ```
@@ -89,14 +90,25 @@ A core research contribution of AEGIS-MESH is the fusion of complementary modali
 
 ---
 
-## Identity Layer (Opt-In)
+## Identity Layer & Policy Engine
 
-Cameras are strictly **excluded** from the primary sensing mesh. They are used *only* for user-initiated identification and are subject to strict architectural isolation:
+Cameras are strictly **excluded** from the primary sensing mesh to preserve the privacy and robustness advantages of the non-imaging core. However, AEGIS-MESH supports flexible operational modes through a **Policy Engine**:
 
-1.  **Purpose:** Identification (Who is this?), never Sensing (Where is this?).
-2.  **Isolation:** Identity nodes run on separate physical hardware links from the mesh.
-3.  **Hardware Kill Switch:** Every Identity Node must have a physical switch that cuts power to the imaging sensor.
-4.  **Privacy:** Biometric processing (face/voice) happens 100% on-device. No facial embeddings or video streams leave the node.
+1.  **Privacy-First Mode (Passive):**
+    *   **Configuration:** Identity Layer is dormant. Sensing Layer tracks anonymous geometry.
+    *   **Trigger:** User manually requests identification via app/dashboard.
+    *   **Use Case:** Privacy-sensitive residential environments.
+
+2.  **Security-First Mode (Automatic Triggering):**
+    *   **Configuration:** Identity Layer is in "Standby."
+    *   **Trigger:** The Sensing Layer detects a track that meets specific criteria (e.g., "Unknown Object," "Motion in Restricted Zone").
+    *   **Action:** The Policy Engine automatically wakes the Identity Node.
+    *   **Result:** The camera activates, identifies the subject, and updates the track label (e.g., "Unknown Person").
+    *   **Use Case:** 24/7 Security monitoring, automated alerting, perimeter defense.
+
+**Architectural Safeguards:**
+*   **Hardware Kill Switch:** Every Identity Node features a physical switch that cuts power to the sensor. This overrides all software policies.
+*   **Isolation:** Identity nodes run on separate physical hardware links from the mesh.
 
 ---
 
@@ -127,12 +139,18 @@ The system optimizes for **resilience to layout change** rather than brute-force
 
 ---
 
-## Privacy Architecture
+## Privacy & Connectivity Architecture
 
-AEGIS-MESH is designed to be private by architecture, not just by policy.
+AEGIS-MESH is designed to be private by architecture, but flexible in connectivity.
 
-*   **No Cloud by Default.** All processing is local on the edge controller (Jetson-class or mini-PC).
-*   **No Raw Sensor Egress.** Only metadata (track positions, event types) leaves the node. No point clouds, audio waveforms, or images traverse the mesh network.
+### Local-First, Cloud-Ready
+The system operates fully offline. It does not *require* internet to function. However, it is designed for integration:
+
+*   **API-Ready:** The edge controller exposes secure API endpoints. Users can integrate the system with Home Assistant, OpenHAB, or custom cloud dashboards.
+*   **User-Controlled Egress:** The decision to expose data to the internet is strictly the user's. The default configuration blocks external traffic; the user must explicitly enable remote access.
+*   **No Raw Sensor Egress by Default:** Only metadata (track positions, event types) leaves the node. No point clouds, audio waveforms, or images traverse the mesh network unless configured for specific analytics pipelines.
+
+### Security
 *   **Audit Logs.** Every metadata egress event is logged in an append-only local log.
 *   **Reproducible Builds.** Users can verify their nodes run the published code.
 
@@ -153,14 +171,14 @@ aegis-mesh/
 │   │   ├── sensor_fusion.md           # LiDAR vs Acoustic Physics
 │   │   ├── occlusion_driven_placement.md
 │   │   ├── privacy_threat_model.md
-│   │   └── why_no_cameras.md          # Architectural argument
+│   │   └── camera_free_sensing.md     # Architectural argument
 │   ├── api/
 │   └── assets/
 ├── hardware/
 │   ├── schematic/
 │   │   ├── always_on_node/            # mmWave + PIR + MCU + audio
 │   │   ├── lidar_node/                # solid-state LiDAR + event sensor
-│   │   └── identity_node/             # Camera/Biometric (Opt-In, Isolated)
+│   │   └── identity_node/             # Camera/Biometric (Policy-Driven)
 │   ├── gerbers/
 │   ├── bom/
 │   ├── assembly/
@@ -186,7 +204,7 @@ aegis-mesh/
 │   ├── cli/                           # Power-user tools
 │   ├── sdk/                           # Python / JS bindings
 │   ├── protocol/
-│   │   └── protocol_spec.md           # Mesh protocol (signed, local-only)
+│   │   └── protocol_spec.md           # Mesh protocol (signed, user-config scope)
 │   └── software.md
 ├── mechanical/
 │   ├── cad/                           # Wall / ceiling / corner enclosures
