@@ -1,138 +1,145 @@
 # Identity Node — Hardware Schematic Reference Design
 
 **Project:** AEGIS-MESH
-**Node Class:** IdentityNode (Opt-in identification — physically isolated from sensing mesh)
-**Status:** Reference design, variant 1 of N. Physical kill switch is mandatory and non-negotiable.
+**Node Class:** IdentityNode — Configurable Visual / Biometric Identification
+**Status:** Reference Design — All Variants. No component is locked.
+**License:** CERN-OHL-S v2
 
 ---
 
 ## 1. Purpose
 
-The Identity Node is the episodic identification layer. It activates only when:
-1. The **Hardware Kill Switch** is in the **ENABLED** position (user-controlled physical switch).
-2. A trigger event is received from the Policy Engine (e.g., "Unknown Object at Entry," "Security-First Mode Active").
+The Identity Node is the configurable identification layer of AEGIS-MESH. It activates based on user-configured policy — either automatically triggered by the sensing layer when anomalous activity is detected, or running continuously per the user's data handling configuration.
 
-It captures data sufficient to classify who or what is present, processes the classification locally, and transmits only the classification result (never raw imagery or biometric data) over the mesh.
+**What it does:**
+- Captures visual or biometric data from a configurable sensor.
+- Processes locally for classification (metadata-only mode) or stores/streams the full capture (per user configuration).
+- Transmits classification results and/or raw media to the edge controller per the user's data handling policy.
+- All data handling modes are available: metadata-only, local recording, app streaming, continuous capture.
 
-This node is **physically isolated** from the sensing mesh:
+**Physical isolation from sensing mesh:**
 - Separate hardware from Always-On and LiDAR nodes.
-- Separate power rail controlled by hardware kill switch.
+- Optional separate power rail controllable by a hardware switch (user-installed if desired).
 - Separate MCU that does not share bus with sensing mesh MCU.
-- Kill-switch GPIO must read HIGH for any sensor activity to occur.
 
 ---
 
-## 2. The Hardware Kill Switch — Primary Trust Anchor
-
-**This is the most important element of this schematic. No part of the design compromises it.**
-
-The kill switch is a physical slider or toggle that cuts:
-1. **Power rail** to all imaging/biometric sensors on this node.
-2. **Data lines** (SPI/I2C/USB) from sensors to the MCU (via analog switches or direct trace cuts).
-
-The MCU continues to receive power (to respond to activation commands from the edge controller) but the sensors are physically disconnected until the kill switch is physically enabled.
-
-**Firmware reads kill-switch GPIO at boot and at every activation cycle.** If the GPIO reads `KILL_SWITCH_DISABLED`, the firmware returns `SensorError::KillSwitchEngaged` and halts any sensor activity. The only activity permitted without a valid kill-switch reading: responding to health queries and emitting `KillSwitchEngaged` status messages.
-
-### 2.1 Kill Switch Physical Implementation
-
-The kill switch (`SW1`) is a **physical DPST (Double Pole Single Throw) slider switch** accessible on the enclosure exterior.
-
-**Pole 1:** Breaks the `V_SENSOR` power rail (disconnects power to all identification sensors).
-**Pole 2:** Breaks the data lines OR grounds the `KILL_SW_GPIO` signal to MCU.
-
-**Positions:**
-- **DISABLED (Default):** Power to identification sensor is physically cut. MCU reads `KILL_SW_GPIO` = LOW. Firmware halts.
-- **ENABLED:** Power rail closed. MCU reads `KILL_SW_GPIO` = HIGH. Firmware boots identification subsystem. Node enters Standby, awaiting activation command.
-
-### 2.2 User Verification
-
-A user can verify the kill switch is active by:
-1. **Visual Inspection:** The switch is physically in the DISABLE position.
-2. **Electrical Test:** Zero voltage at identification sensor power input when DISABLED.
-3. **Firmware Report:** Node reports `KillSwitchEngaged` status over mesh radio when booted with switch DISABLED.
-
----
-
-## 3. Core Architecture
+## 2. Core Architecture
 
 ```
-Power Supply (5V USB / Battery)
+Power Supply (5V USB / Battery / PoE)
        │
-       ├── [ Hardware Kill Switch SW1 (DPST) ] ─────────────┐
-       │         │                                           │
-       │    Pole 1: V_SENSOR rail cut               GPIO read by MCU
-       │         │                                           │
-       ▼         ▼                                           │
-  ┌─────────┐  V_SENSOR ──────────────────────────────────  │
-  │ MCU     │                                        │       │
-  │ (SoC)   │◄────── KILL_SW_GPIO (reads LOW=disabled) ◄──── ┘
+       ├──[ Optional Hardware Power Switch (user-installed) ]────────────┐
+       │         │                                                       │
+       │    Cuts V_SENSOR rail                             GPIO read by MCU (if installed)
+       │    (if switch present and DISABLED)                             │
+       │         │                                                       │
+       ▼         ▼                                                       │
+  ┌─────────┐  V_SENSOR ──────────────────────────────────────────────  │
+  │ MCU     │◄──── CAMERA_HW_SW_GPIO (LOW = disabled, if pin present) ◄─┘
   └────┬────┘
        │
-       │ (CSI / DVP / USB)
+       │ (CSI / DVP / USB per sensor type)
        ▼
-┌─────────────┐     Processed locally; never transmitted raw
-│ Identification  │
-│ Sensor          │
-│ (Configurable)  │
-└─────────────┘
+┌─────────────────────┐
+│ Identification      │
+│ Sensor (Configurable│
+│ — see Section 4)    │
+└─────────────────────┘
        │
        ▼
-┌─────────────┐
-│ Local       │  (Optional: logs, embeddings — user-configured)
-│ Storage     │
-└─────────────┘
+┌─────────────────────┐
+│ Local Storage       │   SD card or internal flash
+│ (Optional — per     │   Raw video, clips, images
+│  data config)       │
+└─────────────────────┘
        │
        ▼
-┌─────────────┐
-│ Mesh Radio  │  Transmits: classification metadata ONLY
-│ Interface   │  Never transmits: raw frames, biometrics
-└─────────────┘
+┌─────────────────────┐
+│ Mesh Radio          │   Transmits per configured data handling mode:
+│                     │   - Metadata only (classification tags)
+│                     │   - Recording availability events
+│                     │   - Live stream relay
+└─────────────────────┘
 ```
 
 ---
 
-## 4. Candidate Component Set (Test Variants — Not Locked)
+## 3. Data Handling — Fully User Configurable
 
-### MCU (Identity Processing)
+All data handling is configured in `aegis-mesh.toml`. The architecture supports any combination.
 
-- **Variant A:** STM32H755 (dual Cortex-M7/M4, hardware crypto, TrustZone, USB, camera interface)
-- **Variant B:** NXP i.MX RT1060 (Cortex-M7, 600 MHz, rich camera interface, excellent neural inference performance)
+### Mode A — Metadata-Only (Default)
 
-The identity MCU must NOT be the same die as the sensing mesh MCU. Physical isolation is required.
+- On-device inference produces classification tags.
+- Only `IdentificationEvent` metadata transmitted over mesh.
+- Example: `{"class": "KnownResident", "confidence": 0.94}`
+- No raw frames stored or transmitted.
+- Minimum bandwidth and storage footprint.
 
-### Identification Sensor — Configurable (All Are Test Variants — No One Type Mandated)
+### Mode B — Local Storage
 
-**Visual (Camera-Based):**
-- **Variant A:** Arducam IMX219 (8 MP, CSI, configurable wide or narrow angle lens)
-- **Variant B:** Sony IMX307 (2 MP, low light, MIPI CSI)
-- **Variant C:** OmniVision OV5640 (5 MP, autofocus, USB/MIPI)
+- Raw video, images, or clips written to on-node SD card or internal flash.
+- Available for review via AEGIS-MESH companion app or direct SD card access.
+- Suitable for security investigations, legal evidence, system calibration, incident review.
+- Storage capacity and retention period user-configured.
+- `RecordingAvailable` mesh event sent to edge controller on completion.
 
-**Near-IR / Structured Light:**
-- **Variant D:** Intel RealSense D415 (stereo depth + RGB, USB)
-- **Variant E:** Dot-projector style structured light (IR emitter + IR camera — research only)
+### Mode C — App Streaming
 
-**Self-Contained Neural Inference Modules:**
-- **Variant F:** HiMax HM01B0 (QVGA, ultra-low power, first-stage detection on-chip)
-- **Variant G:** Luxonis OAK-1 (neural inference on-module, no raw video off-module)
+- Raw or compressed video/audio streamed to the AEGIS-MESH companion app over Wi-Fi.
+- Users view live footage and review recordings from mobile or desktop.
+- Simultaneous local storage available if configured.
 
-**Non-Visual Biometric:**
-- **Variant H:** Fingerprint scanner (Synaptics FS4500) — only viable for fixed entry points
-- **Variant I:** Voice recognition pre-processor (Sensory TrulyHandsfree) — audio-only identification variant
+### Mode D — Continuous Recording
 
-**Selection criteria:** Accuracy at 1–3 m deployment distance, on-device inference capability, power consumption during active identification cycle, physical size for enclosure.
+- All sensor data captured continuously or on-trigger.
+- Recordings carry embedded integrity metadata (timestamp, node ID, cryptographic hash chain) for legal use.
+- Users export for legal proceedings, insurance claims, or personal records.
 
-### Kill Switch Component
+### Configuration (`aegis-mesh.toml`)
 
-- **Variant A:** Alps SSSS811101 (SMD slider, 0.5 mm travel, clear tactile feedback)
-- **Variant B:** Omron D2JW-01K13H (subminiature snap-action, rated 100k cycles)
+```toml
+[identity_node.data]
+mode = "metadata_only"               # "metadata_only" | "local_storage" | "app_streaming" | "full_recording"
+store_raw = false                    # Enable raw frame/video storage
+storage_target = "sd_card"          # "sd_card" | "internal_flash"
+retention_days = 90                  # 0 = keep forever
+continuous_recording = false
+recording_trigger = "on_detection"
+enable_streaming = false
+stream_quality = "high"
+include_integrity_chain = true
+```
 
-The kill switch must be physically accessible to the user. Enclosure design must expose the switch for operation without requiring tools.
+---
 
-### Mesh Radio
+## 4. Privacy Architecture
 
-- Same mesh radio as Always-On Node (consistent protocol layer across all node types).
-- Identity node transmits on the isolated identity channel (logical isolation enforced by protocol; physical isolation by separate antenna if available).
+The privacy model is user-configured, not system-imposed.
+
+**User-controlled options:**
+
+**Hardware Power Switch (optional — user-installed):**
+- A physical slider or toggle that cuts the `V_SENSOR` power rail.
+- When DISABLED: sensor is physically unpowered; no capture occurs.
+- When ENABLED: all software data handling modes are available.
+- **This is an option the user can add — it is not architecturally required.**
+- Some users want guaranteed physical camera disable without software interaction; this enables that.
+- Other users prefer software-only control; no switch is needed.
+
+**Software Scheduling:**
+- Camera inactive during configured hours in `aegis-mesh.toml`.
+
+**Detection-Triggered Mode:**
+- Sensing layer triggers Identity Node only when anomaly criteria are met.
+
+**Always-On Mode:**
+- Identity Node captures continuously per storage configuration.
+
+**No Restrictions:**
+- The system does not impose any jurisdiction-specific data limits.
+- Users are responsible for compliance with applicable recording, privacy, and data protection laws in their jurisdiction.
 
 ---
 
@@ -140,89 +147,158 @@ The kill switch must be physically accessible to the user. Enclosure design must
 
 ### 5.1 Power Supply
 
-- **Input:** 5V DC (USB-C or screw terminal).
+- **Input:** 5V DC (USB-C, screw terminal, or PoE splitter).
 - **Main rail:** 3.3V LDO for MCU and peripherals.
-- **Switched rail:** Secondary power rail for identification sensor, gated by Kill Switch.
+- **Sensor rail (`V_SENSOR`):** Secondary power rail for identification sensor.
+  - Can be gated by an optional user-installed hardware switch.
+  - Can also be software-controlled via MCU GPIO → MOSFET for software-only privacy control.
 
 ### 5.2 Camera Interface
 
-- **Connector:** 24-pin FPC connector (compatible with standard camera modules).
-- **Design:** Modular — any compatible camera module can be connected.
-- **Route:** MIPI CSI-2 traces with 100 Ω differential impedance; length-match pairs within 5 mil.
+- **Connector:** 24-pin FPC (compatible with standard camera modules).
+- **Modular:** Any compatible camera module can be connected.
+- **Route:** MIPI CSI-2 traces with 100 Ω differential impedance.
 
-### 5.3 Local Storage (Optional)
+### 5.3 Local Storage
 
-- microSD Card slot (SPI mode) or external QSPI Flash.
-- **Control:** User configures if/what is stored. Default: no local storage.
+- **Primary:** microSD card slot (SPI mode, up to 2 TB).
+- **Secondary:** On-board QSPI NOR Flash (8–128 MB) for metadata, logs, model weights.
+- **Purpose:** Raw video, image clips, acoustic recordings, integrity manifests.
+- Removable SD card allows user to physically retrieve recordings without network access.
+- Strongly recommended for legal evidence applications.
 
 ### 5.4 Mesh Communication
 
-- **Protocol:** Only `IdentificationEvent` metadata transmitted.
-- **Example payload:** `{"id": "node_04", "type": "identity", "classification": "Known Resident", "confidence": 0.96}`
-- **Never transmitted:** Raw frames, embeddings, intermediate processing data.
+**Metadata-only (default):**
+```json
+{"id": "node_04", "type": "identity", "classification": "Known Resident", "confidence": 0.96}
+```
+
+**With recording available:**
+```json
+{
+  "id": "node_04",
+  "type": "identity",
+  "classification": "Known Resident",
+  "confidence": 0.96,
+  "raw_media_path": "node_04/clip_20240315_143022.mp4",
+  "clip_duration_s": 5.2,
+  "live_stream_available": false
+}
+```
+
+**App streaming mode:** Live video/image stream transmitted to companion app over Wi-Fi. Endpoint announced via `MediaStreamStarted` mesh event.
 
 ---
 
-## 6. Privacy Architecture
+## 6. Candidate Component Set (Test Variants — Not Locked)
 
-- **Sensing Mesh:** Never receives raw frames. Only receives `IdentificationEvent` metadata.
-- **Identity Node:** Processes frames locally. Never transmits raw video.
-- **User Control:**
-  - User must physically enable the node via kill switch.
-  - User configures retention policies (default: no retention).
-  - User approves model updates (cannot be OTA'd without consent).
+### MCU (Identity Processing)
+
+- **Variant A:** STM32H755 (dual Cortex-M7/M4, hardware crypto, TrustZone, USB, camera interface)
+- **Variant B:** NXP i.MX RT1060 (Cortex-M7, 600 MHz, camera interface, neural inference performance)
+- **Variant C:** NXP i.MX 8M Mini (quad-core Cortex-A53 + Cortex-M4, Linux-capable, NPU)
+
+The identity MCU must NOT share the same die as the sensing mesh MCU. Physical isolation required.
+
+### Identification Sensor — All Are Test Variants
+
+**Visual (Camera-Based):**
+- **Variant A:** Arducam IMX219 (8 MP, CSI, configurable lens)
+- **Variant B:** Sony IMX307 (2 MP, low light, MIPI CSI-2)
+- **Variant C:** OmniVision OV5640 (5 MP, autofocus, USB/MIPI)
+- **Variant D:** OmniVision OV2640 (2 MP, compact, DVP/SPI) — minimal cost option
+
+**Multi-Camera Array (Advanced):**
+- **Variant E:** 2–4 OV2640 modules at configured angles (coverage per entry geometry)
+- **Variant F:** 360° camera array using 4–8 OV2640 or IMX219 modules for full entry point coverage
+
+**Depth / Structured Light:**
+- **Variant G:** Intel RealSense D415 (stereo depth + RGB, USB)
+- **Variant H:** Dot-projector structured light + IR camera (research only)
+
+**Self-Contained Neural Inference:**
+- **Variant I:** HiMax HM01B0 (QVGA, ultra-low power, first-stage detection on-chip)
+- **Variant J:** Luxonis OAK-1 (neural inference on-module)
+
+**Non-Visual Biometric:**
+- **Variant K:** Fingerprint scanner (Synaptics FS4500) — fixed entry points only
+- **Variant L:** Voice recognition pre-processor (Sensory TrulyHandsfree) — audio identification
+
+### Optional Hardware Power Switch (User-Installed)
+
+- **Variant A:** Alps SSSS811101 (SMD slider, 0.5 mm travel)
+- **Variant B:** Omron D2JW-01K13H (snap-action, 100k cycles)
+- **Variant C:** None — software-only control via MCU GPIO → MOSFET
+
+The switch is user-installed. The PCB provides the option via:
+- Designated footprint on `V_SENSOR` rail
+- Optional MOSFET for software-only equivalent without physical switch
+
+### Local Storage
+
+- **Primary:** microSD card slot (SPI) — up to 2 TB, removable
+- **Secondary:** On-board QSPI NOR Flash (metadata, logs, model weights)
+
+### Mesh Radio
+
+- Same mesh radio as Always-On Node (consistent protocol across all node types).
 
 ---
 
-## 7. On-Device Processing Requirement
+## 7. QC Tests
 
-Raw sensor data **must not leave this node.** The identity MCU processes all raw data locally. Output is exclusively classification labels and confidence scores.
+### All Units
 
-For camera variants: image capture, inference, and result extraction all occur on-MCU. Images are never written to external flash, transmitted over any interface, or buffered in RAM after inference completes.
+1. **Power-on self-test** — MCU boots, firmware CRC verified.
+2. **Rail verification** — All power rails within spec.
+3. **Identification sensor initialization** — Sensor responds to init sequence.
+4. **Mesh radio ping** — Node appears on network, responds within 200 ms.
 
-This is enforced architecturally by the firmware binary: there is no serial protocol or interface that accepts raw frame data from an external host.
+### Data Handling Mode Verification
+
+5. Verify configured data handling mode operates correctly:
+   - **Metadata-only:** Only classification tags transmitted over mesh. No file created on SD.
+   - **Local storage:** Recording file written to SD card within 500 ms of trigger.
+   - **App streaming:** Companion app receives live stream within 2 seconds of activation.
+   - **Full recording:** Recording file present with correct duration after trigger event.
+
+### Optional Hardware Switch Verification (Only If Switch Is Installed)
+
+6. Switch DISABLED: Confirm zero current on `V_SENSOR` rail (0 mA ± 2 mA). If current > 2 mA: FAIL — unit does not isolate sensor power.
+7. Switch ENABLED: Confirm `V_SENSOR` > 3.0 V (sensor powered).
+8. Firmware switch state report: verify correct status reported via mesh radio.
+
+### Processing Tests
+
+9. **Identification accuracy** — Known resident at 1 m, 2 m, 3 m; unknown at same distances. Measure true-positive and false-positive rates.
+10. **Processing latency** — Time from activation to first classification result. Target: < 2 seconds.
 
 ---
 
-## 8. QC Required Tests
-
-1. **Kill-switch continuity test:** With switch DISABLED, confirm zero current to identity sensor (bench multimeter). Mandatory for every unit before shipping.
-2. **Kill-switch firmware test:** Boot with switch DISABLED; verify firmware emits `KillSwitchEngaged` and no sensor activation occurs.
-3. **Identification accuracy test:** Known resident at 1 m, 2 m, 3 m; unknown person at same distances. Measure true-positive rate for known, false-positive rate for unknown.
-4. **Processing latency test:** Time from activation command received to classification result transmitted. Target: < 2 seconds for camera-based identification.
-5. **No-egress test:** Packet sniffer on mesh radio during identification cycle. Verify zero raw imagery or biometric data in any transmitted packet.
-
----
-
-## 9. Compliance Notes
+## 8. Compliance Notes
 
 - **Radio:** Wi-Fi / BLE module must be FCC/CE certified.
-- **Optical Safety:** If using IR illumination, ensure Class 1 (eye-safe) wavelengths.
-- **Privacy:** Hardware kill switch satisfies "privacy by design" principles for most jurisdictions. Consult legal counsel for specific deployment contexts.
-- **Kill Switch:** The kill switch is not optional. Any Identity Node without a hardware kill switch does not comply with AEGIS-MESH privacy requirements.
+- **Optical Safety:** If using IR illumination, ensure Class 1 eye-safe wavelengths.
+- **Recording Laws:** Users are responsible for compliance with applicable recording consent laws in their jurisdiction. System imposes no jurisdictional restrictions.
+- **Legal Evidence:** Integrity chain suitable for legal proceedings. Recordings include SHA-256 hash, firmware version, device ID, and timestamp.
 
 ---
 
-## 10. Directory Contents
+## 9. Directory Structure
 
 ```
 identity_node/
-├── identity_node.kicad_pro
-├── identity_node.kicad_sch
-├── identity_node.kicad_pcb
-├── identity_node.pdf
+├── variant_a_standard/
+│   ├── identity_node_std.kicad_pro
+│   ├── identity_node_std.kicad_sch
+│   ├── identity_node_std.kicad_pcb
+│   └── gerbers/
+├── variant_b_multi_camera/
+│   ├── identity_node_multi_cam.kicad_pro
+│   └── gerbers/
+├── bom/
+│   ├── identity_node_std_bom.csv
+│   └── identity_node_multi_cam_bom.csv
 └── README.md
 ```
-
----
-
-## 11. Design Checklist (For Implementation)
-
-- [ ] Kill switch cut verified: zero voltage on `V_SENSOR` when SW1 = DISABLED.
-- [ ] GPIO pull-up/down: MCU reads correct state at boot.
-- [ ] Firmware halt: `if kill_switch == DISABLED { loop {} }`.
-- [ ] FPC connector accessible and correct pinout orientation.
-- [ ] Power budget: LDO can handle peak current during neural inference.
-- [ ] Thermal vias: present under high-performance MCU.
-- [ ] Mounting holes: provided for enclosure integration.
-- [ ] Data line isolation: analog switches in series with MIPI data lines, controlled by SW1 Pole 2.
