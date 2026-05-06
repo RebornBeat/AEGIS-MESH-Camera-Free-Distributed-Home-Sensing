@@ -330,7 +330,7 @@ d. Nothing in this Public License constitutes or may be interpreted as a limitat
 
 ## CERN Open Hardware Licence Version 2 - Strongly Reciprocal
 
-**Note:** This license applies to any hardware designs, schematics, or mechanical CAD files should they be added to the `/hardware` or `/mechanical` directories in the future.
+**Note:** This license applies to any hardware designs, schematics, or mechanical CAD files should they be added to the `/hardware` or `/mechanical` directories in the future and/or for those already present.
 
 The full text of the CERN-OHL-S-2.0 license is available at: `https://ohwr.org/cern_ohl_s_v2.txt` and is incorporated here by reference.
 
