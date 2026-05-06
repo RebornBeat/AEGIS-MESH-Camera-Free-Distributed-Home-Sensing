@@ -1,6 +1,27 @@
+# Triple License Notice
+
+**AEGIS-MESH** is released under a triple-license model. Different parts of the repository are governed by different licenses. By contributing to or using this project, you agree to the terms of the applicable license for each part.
+
+### 1. Software, Firmware, and Associated Data (MIT License)
+
+All software code, firmware code, scripts, configuration files, and associated data files (e.g., `.py`, `.rs`, `.c`, `.h`, `.json`, `.toml`, `.yaml`) contained within the `crates/`, `firmware/`, `software/`, and root directories (unless otherwise specified) are licensed under the **MIT License**.
+
+### 2. Hardware Designs (CERN-OHL-S-2)
+
+All hardware designs, including schematics, PCB layouts, mechanical CAD models, and associated hardware description files (e.g., `.kicad_sch`, `.kicad_pcb`, `.step`, `.stl`, `.brd`, `.sch`) contained within the `hardware/` and `mechanical/` directories are licensed under the **CERN Open Hardware Licence Version 2 - Strongly Reciprocal**.
+
+### 3. Documentation (CC BY 4.0)
+
+All documentation, guides, theory papers, diagrams, and assets (e.g., `.md`, `.pdf`, `.png`, `.svg`) contained within the `docs/`, `media/`, and `legal/` directories (unless explicitly stating otherwise) are licensed under the **Creative Commons Attribution 4.0 International License**.
+
+---
+
+## 1. MIT License
+
+```
 MIT License
 
-Copyright (c) 2026 RebornBeat
+Copyright (c) 2026 AEGIS-MESH
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -19,3 +40,272 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+```
+
+---
+
+## 2. CERN Open Hardware Licence Version 2 - Strongly Reciprocal
+
+This source distribution is subject to the terms of the CERN Open Hardware Licence
+Version 2 - Strongly Reciprocal.
+
+### Preamble
+
+This source is subject to the terms of the CERN Open Hardware Licence
+Version 2 - Strongly Reciprocal. A copy of this licence can be found in
+the LICENCE file at the root of this repository, or online at:
+
+https://ohwr.org/project/cernohl/wikis/Documents/CERN-OHL-S-2
+
+### Source Location
+
+The upstream source code repository for this project can be found at:
+
+https://github.com/RebornBeat/aegis-mesh
+
+### Licence Text
+
+**CERN Open Hardware Licence Version 2 - Strongly Reciprocal**
+
+**CERN**
+
+**Open Hardware Licence Version 2 - Strongly Reciprocal**
+
+**Preamble**
+
+Community knowledge, like technological knowledge, is a strategic resource for the economy. Open sharing of this knowledge allows everyone to contribute to building a community of practitioners. This community of practice is both a source of innovation and a guarantee of reproducibility and reliability.
+
+CERN has more than sixty years of experience in sharing technological knowledge and considers this approach the best way to create a collaborative community to support its mission to share knowledge through open access publishing, software licensing schemes such as the GNU GPL, and now hardware designs.
+
+The GNU GPL was created by the Free Software Foundation. It is designed to ensure that software is shared freely and openly, and remains that way, by requiring that any derivatives of the software be made available under the same terms. This CERN Open Hardware Licence has been created with similar principles in mind.
+
+This CERN Open Hardware Licence aims to promote the sharing of knowledge, by guaranteeing that hardware designs remain free and open for all to use, modify and distribute, as long as the conditions of this licence are met.
+
+To promote the uptake of this Licence, CERN has published the text of the Licence in several languages, including English, French, German and Spanish. In the event of any inconsistency between the English version and a translation, the English version shall prevail.
+
+This Licence is available in two variants: Strongly Reciprocal (S) and Weakly Reciprocal (W). The only difference between the two is the scope of the Reciprocity obligation. This is the Strongly Reciprocal version.
+
+**CERN Open Hardware Licence Version 2 - Strongly Reciprocal**
+
+**Version 2.0, 30 August 2021**
+
+**1. Definitions**
+
+1.1 "Accept" means to access, use or Share Licensed Source or any part thereof, or to exercise any Licensed Right in any Licensed Material or part thereof.
+
+1.2 "Active Development" means any work on the Licensed Source, whether publicly available or not, by You, and includes any modifications made to the Licensed Source by You.
+
+1.3 "Application" means a design which incorporates, or which is based on, one or more Licensed Modules.
+
+1.4 "Available Source" means Source from which a particular modification or derivative can be produced.
+
+1.5 "Contribute" means to transfer ownership of modifications to the Licensed Source to the Licensor, as provided in Clause 5.1.
+
+1.6 "Design File" means a file which describes the hardware design, or any part thereof, of the Licensed Material.
+
+1.7 "External Modification" means a modification made to a Licensed Module which is not incorporated into the Available Source for that Licensed Module.
+
+1.8 "Externally Manufactured Product" means a Product which is manufactured by You, or on Your behalf, using a Licensed Module, but where the Licensed Module has not been manufactured by You, or on Your behalf, from the Available Source for that Licensed Module.
+
+1.9 "Licensed Material" means the hardware design made available by the Licensor under this Licence, as indicated by a copyright notice included in or with the Licensed Material.
+
+1.10 "Licensed Module" means a module which is made available under the terms of this Licence.
+
+1.11 "Licensed Product" means any product or device which incorporates, or which is based on, one or more Licensed Modules.
+
+1.12 "Licensed Rights" means the rights to use, reproduce, modify, display, perform, sublicense, and distribute Licensed Material.
+
+1.13 "Licensed Source" means the Source made available under this Licence.
+
+1.14 "Licence" means this CERN Open Hardware Licence Version 2 - Strongly Reciprocal.
+
+1.15 "Licensor" means the person or entity that distributes the Licensed Material under this Licence.
+
+1.16 "Manufacture" means to produce or have produced a Licensed Product from Available Source.
+
+1.17 "Notice" means a notice of the form set out in the Exhibit A to this Licence, which must be included with any distribution of Licensed Material or Licensed Source.
+
+1.18 "Product" means any tangible product or device, or any part thereof, which incorporates, or which is based on, the Licensed Material.
+
+1.19 "Reciprocity" means the obligation to make available the Source of Licensed Modules that are used in a Product under the conditions set out in Clause 4.
+
+1.20 "Share" means to provide copies of the Licensed Material or Licensed Source to any third party.
+
+1.21 "Source" means the human-readable form of the Licensed Material, including all Design Files, associated software, and other materials needed to understand, modify, and manufacture the hardware design, or any part thereof.
+
+1.22 "You" means any natural or legal person, or any entity, who Accepts this Licence.
+
+**2. Scope**
+
+2.1 This Licence governs the use, copying, modification, and distribution of the Licensed Material, and the manufacture and distribution of Products.
+
+2.2 This Licence applies to any hardware design that includes a Notice indicating that it is subject to the terms of this Licence.
+
+**3. Grant of Rights**
+
+3.1 Subject to the terms and conditions of this Licence, the Licensor hereby grants to You a worldwide, royalty-free, non-exclusive licence to:
+
+    a) use, reproduce, modify, display, perform, sublicense, and distribute the Licensed Material;
+
+    b) manufacture, use, reproduce, modify, display, perform, sublicense, and distribute Licensed Products; and
+
+    c) use the Licensed Material to create derivative works.
+
+3.2 You may exercise the Licensed Rights in the Licensed Material for any purpose, including commercial purposes.
+
+**4. Reciprocity**
+
+4.1 If You Share any part of the Licensed Material, or any derivative of it, You must do so only under the terms of this Licence.
+
+4.2 If You Manufacture a Licensed Product, You must make the Source of that Licensed Product available under the terms of this Licence.
+
+4.3 If You Manufacture an Externally Manufactured Product, You must:
+
+    a) ensure that the Source for the Licensed Module used in that Externally Manufactured Product is made available under the terms of this Licence; and
+
+    b) notify any recipient of the Externally Manufactured Product that it is subject to the terms of this Licence.
+
+4.4 The Reciprocity obligation in Clause 4.2 extends to the entire Source of the Licensed Product. This means that You must make the Source available for the entire Product, not just for the Licensed Modules that it incorporates. The Source for the Product must be made available under the terms of this Licence.
+
+**5. Contributions**
+
+5.1 If You Contribute modifications to the Licensed Source to the Licensor, You grant to the Licensor, and to any recipient of the Licensed Source, a non-exclusive, worldwide, royalty-free licence to use, reproduce, modify, display, perform, sublicense, and distribute Your Contributions.
+
+5.2 By Contributing modifications to the Licensed Source, You represent that You are the owner of the intellectual property rights in the Contributions, or that You are authorised to grant the licences set out in Clause 5.1.
+
+**6. Notices**
+
+6.1 You must retain all copyright and other notices contained in the Licensed Material.
+
+6.2 You must include a copy of this Licence with every copy of the Licensed Material that You distribute.
+
+6.3 You must include a Notice with every Licensed Product that You distribute.
+
+**7. Disclaimer of Warranty**
+
+7.1 Licensed Material and any part thereof are provided "as is", without warranty of any kind, express or implied, including, but not limited to, the warranties of merchantability, fitness for a particular purpose and non-infringement.
+
+7.2 In no event shall the Licensor be liable for any claim, damages or other liability, whether in an action of contract, tort or otherwise, arising from, out of or in connection with the Licensed Material or the use or other dealings in the Licensed Material.
+
+**8. Limitation of Liability**
+
+8.1 In no event shall the Licensor be liable for any direct, indirect, incidental, special, exemplary, or consequential damages (including, but not limited to, procurement of substitute goods or services; loss of use, data, or profits; or business interruption) however caused and on any theory of liability, whether in contract, strict liability, or tort (including negligence or otherwise) arising in any way out of the use of this Licence, even if advised of the possibility of such damage.
+
+**9. Termination**
+
+9.1 This Licence and the rights granted hereunder will terminate automatically upon any breach by You of the terms of this Licence.
+
+9.2 Upon termination, You must cease all exercise of the Licensed Rights. However, Your obligations under Clause 4 (Reciprocity) shall survive termination.
+
+**10. Applicable Law**
+
+10.1 This Licence shall be governed by the laws of Switzerland.
+
+**11. Miscellaneous**
+
+11.1 If any provision of this Licence is held to be unenforceable, such provision shall be reformed only to the extent necessary to make it enforceable.
+
+11.2 Any failure by the Licensor to enforce any provision of this Licence will not constitute a waiver of future enforcement of that provision or any other provision.
+
+11.3 You may not use the name of the Licensor, nor the name of any other contributor to the Licensed Material, to endorse or promote products derived from this software without specific prior written permission.
+
+**Exhibit A - Notice**
+
+```
+Copyright (c) [Year] [Copyright Holder]
+
+This source is subject to the terms of the CERN Open Hardware Licence
+Version 2 - Strongly Reciprocal. A copy of this licence can be found in
+the LICENCE file at the root of this repository, or online at:
+
+https://ohwr.org/project/cernohl/wikis/Documents/CERN-OHL-S-2
+
+The source is provided "as is", without any warranty of any kind, express or
+implied. In no event shall the Licensor be liable for any claim, damages or
+other liability, as set out in the Licence.
+```
+
+---
+
+## 3. Creative Commons Attribution 4.0 International License
+
+**Creative Commons Attribution 4.0 International**
+
+**Creative Commons Corporation**
+
+**Creative Commons Attribution 4.0 International Public License**
+
+By exercising the Licensed Rights (defined below), You accept and agree to be bound by the terms and conditions of this Creative Commons Attribution 4.0 International Public License ("Public License"). To the extent this Public License may be interpreted as a contract, You are granted the Licensed Rights in consideration of Your acceptance of these terms and conditions, and the Licensor grants You such rights in consideration of benefits the Licensor receives from making the Licensed Material available under these terms and conditions.
+
+**Section 1 – Definitions.**
+
+a. **Adapted Material** means material subject to Copyright and Similar Rights that is derived from or based upon the Licensed Material and in which the Licensed Material is translated, altered, arranged, transformed, or otherwise modified in a manner requiring permission under the Copyright and Similar Rights holding jurisdiction. For the purposes of this Public License, where the Licensed Material is a musical work, performance, or sound recording, Adapted Material is always produced where the Licensed Material is synched in timed relation with a moving image.
+
+b. **Adapter's License** means the license You apply to Your Copyright and Similar Rights in Your contributions to Adapted Material in accordance with the terms and conditions of this Public License.
+
+c. **Copyright and Similar Rights** means copyright and/or similar rights closely related to copyright including, without limitation, performance, broadcast, sound recording, and Sui Generis Database Rights, without regard to how the rights are labeled or categorized. For purposes of this Public License, the rights specified in Section 2(b)(1)-(2) are not Copyright and Similar Rights.
+
+d. **Effective Technological Measures** means those measures that, in the absence of proper authority, may not be circumvented under laws fulfilling obligations under Article 11 of the WIPO Copyright Treaty adopted on December 20, 1996, and/or similar international agreements.
+
+e. **Exceptions and Limitations** means fair use, fair dealing, and/or any other exception or limitation to Copyright and Similar Rights that applies to Your use of the Licensed Material.
+
+f. **Licensed Material** means the artistic or literary work, database, or other material to which the Licensor applied this Public License.
+
+g. **Licensed Rights** means the rights granted to You subject to the terms and conditions of this Public License, which are limited to all Copyright and Similar Rights that apply to Your use of the Licensed Material and that the Licensor has authority to license.
+
+h. **Licensor** means the individual(s) or entity(ies) granting rights under this Public License.
+
+i. **Share** means to provide material to the public by any means or process that requires permission under the Licensed Rights, such as reproduction, public display, public performance, distribution, dissemination, communication, or importation, and to make material available to the public including in ways that members of the public may access the material from a place and at a time individually chosen by them.
+
+j. **Sui Generis Database Rights** means rights other than copyright resulting from Directive 96/9/EC of the European Parliament and of the Council of 11 March 1996 on the legal protection of databases, as amended and/or succeeded, as well as other essentially equivalent rights anywhere in the world.
+
+k. **You** means the individual or entity exercising the Licensed Rights under this Public License. **Your** has a corresponding meaning.
+
+**Section 2 – Scope.**
+
+a. **License grant.**
+
+    1. Subject to the terms and conditions of this Public License, the Licensor hereby grants You a worldwide, royalty-free, non-sublicensable, non-exclusive, irrevocable license to exercise the Licensed Rights in the Licensed Material to:
+
+        A. reproduce and Share the Licensed Material, in whole or in part; and
+        B. produce, reproduce, and Share Adapted Material.
+
+    2. **Exceptions and Limitations.** For the avoidance of doubt, where Exceptions and Limitations apply to Your use, this Public License does not apply, and You do not need to comply with its terms and conditions.
+
+    3. **Term.** The term of the Public License is specified in Section 6(a).
+
+    4. **Media and formats; technical modifications allowed.** The Licensor authorizes You to exercise the Licensed Rights in all media and formats whether now known or hereafter created, and to make technical modifications necessary to do so. The Licensor waives and/or agrees not to assert any right or authority to forbid You from making technical modifications necessary to exercise the Licensed Rights, including technical modifications necessary to circumvent Effective Technological Measures. For purposes of this Public License, simply making modifications authorized by this Section 2(a)(4) never produces Adapted Material.
+
+    5. **Downstream recipients.**
+        A. **Offer from the Licensor – Licensed Material.** Every recipient of the Licensed Material automatically receives an offer from the Licensor to exercise the Licensed Rights under the terms and conditions of this Public License.
+        B. **No downstream restrictions.** You may not offer or impose any additional or different terms or conditions on, or apply any Effective Technological Measures to, the Licensed Material if doing so restricts exercise of the Licensed Rights by any recipient of the Licensed Material.
+
+    6. **No endorsement.** Nothing in this Public License constitutes or may be construed as permission to assert or imply that You are, or that Your use of the Licensed Material is, connected with, or sponsored, endorsed, or granted official status by, the Licensor or others designated to receive attribution as provided in Section 3(a)(1)(A)(i).
+
+b. **Other rights.**
+
+    1. Moral rights, such as the right of integrity, are not licensed under this Public License, nor is publicity, privacy, and/or other similar personality rights; however, to the extent possible, the Licensor waives and/or agrees not to assert any such rights held by the Licensor to the limited extent necessary to allow You to exercise the Licensed Rights, but not otherwise.
+    2. Patent and trademark rights are not licensed under this Public License.
+    3. The Licensor waives the right to collect royalties, whether individually or, in the event that the Licensor is a member of a collecting society that administers voluntary licensing schemes, via that society, from any exercise of the Licensed Rights.
+
+**Section 3 – License Conditions.**
+
+Your exercise of the Licensed Rights is expressly made subject to the following conditions.
+
+a. **Attribution.**
+
+    1. If You Share the Licensed Material (including in modified form), You must:
+
+        A. retain the following if it is supplied by the Licensor with the Licensed Material:
+
+            i. identification of the creator(s) of the Licensed Material and any others designated to receive attribution, in any reasonable manner requested by the Licensor (including by pseudonym if designated);
+            ii. a copyright notice;
+            iii. a notice that refers to this Public License;
+            iv. a notice that refers to the disclaimer of warranties;
+            v. a URI or hyperlink to the Licensed Material to the extent reasonably practicable;
+
+        B. indicate if You modified the Licensed Material and retain an indication of any previous modifications; and
+
+        C. indicate the Licensed Material is licensed under this Public License, and include the text of, or the URI or hyperlink to, this Public License.
+
+    2. You may satisfy
