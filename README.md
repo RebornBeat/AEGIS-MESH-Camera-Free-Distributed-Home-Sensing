@@ -1,235 +1,249 @@
 # AEGIS-MESH — Distributed Residential Sensing Research Platform
 
-**A privacy-first, geometry-driven distributed perception mesh for residential awareness. AEGIS-MESH fuses LiDAR, mmWave radar, and neuromorphic sensing to answer critical awareness questions—presence, occupancy, anomaly, and identity—without relying on continuous video surveillance by default.**
+**A geometry-driven distributed perception mesh for residential awareness. AEGIS-MESH fuses LiDAR, mmWave radar, neuromorphic sensing, and optional visual capture to answer awareness questions — presence, occupancy, anomaly, geometry, and identity — with full user control over data capture, storage, and retention.**
 
 [![License: MIT](https://img.shields.io/badge/Code-MIT-blue.svg)](#license)
 [![License: CERN OHL](https://img.shields.io/badge/Hardware-CERN%20OHL--S%20v2-green.svg)](#license)
-[![Privacy-First](https://img.shields.io/badge/Architecture-Privacy%20By%20Design-green.svg)](#privacy-architecture)
 [![Status: Research](https://img.shields.io/badge/Status-Research%20%2F%20Educational-orange.svg)](#scope)
 
 ---
 
 ## Scope
 
-AEGIS-MESH is a **research and education platform** for studying distributed residential perception. It provides the architecture, firmware reference implementations, software stack, and protocol specifications for building a high-fidelity sensor mesh.
+AEGIS-MESH is a **research and education platform** studying distributed residential perception. It provides architecture, firmware reference implementations, software stack, and protocol specifications for building a high-fidelity sensor mesh.
 
-**Key Thesis:** *Most actionable residential awareness needs—presence, tracking, fall detection, and intrusion—can be solved with higher reliability and better privacy using a distributed mesh of non-imaging sensors than with traditional cameras.*
+**Key Thesis:** *Most actionable residential awareness needs — presence, tracking, fall detection, intrusion, geometry — can be solved with higher reliability using a distributed mesh of complementary sensors. The sensing backbone is camera-free by architecture. Visual capture is an additive configurable layer, not the foundation.*
 
 **Intended Audience:** Hobbyists, makers, privacy researchers, educators, and integrators.
 
 **Disclaimers:**
-*   **Not a certified life-safety product.** It is not UL-listed or CE-marked for safety functions.
-*   **Not a substitute for smoke/CO detectors** or monitored alarm systems.
-*   **Capability vs. Certification:** While the system is *capable* of 24/7 monitoring and automated alerting, the maintainers do not certify it for life-safety applications. The user assumes responsibility for validating configurations for their specific jurisdiction and use case.
+- Not a certified life-safety product (not UL-listed or CE-marked for safety functions).
+- Not a substitute for smoke/CO detectors or monitored alarm systems.
+- User assumes responsibility for validating configurations for their jurisdiction and use case.
 
 ---
 
 ## Architecture Overview
 
-AEGIS-MESH moves away from the "symmetric grid" approach of placing identical sensors everywhere. Instead, it employs a **Hybrid Node Strategy** that optimizes for cost, power, and information density.
-
 ### The Core Thesis: Sensing vs. Identification
 
-The fundamental design error in traditional smart-home systems is conflating **Sensing** (continuous state observation) with **Identification** (discrete entity recognition).
+AEGIS-MESH separates **Sensing** (continuous state observation) from **Identification** (discrete entity recognition):
 
-*   **Sensing (Continuous):** Monitoring state, motion, position, and behavior. This requires high temporal resolution, robustness to environment (lighting, fog, occlusion), and low latency. It is best performed by non-imaging sensors.
-*   **Identification (Discrete):** Determining *who* a specific individual is. This traditionally requires high spatial resolution (imagery) but is an episodic query, not a continuous state.
+**Sensing (Continuous):** Monitoring state, motion, position, and behavior. Requires high temporal resolution, robustness to environment (lighting, fog, occlusion), and low latency. Best performed by non-imaging sensors.
 
-AEGIS-MESH separates these functions physically and logically:
-1.  **Always-On Sensing Layer:** Non-imaging sensors (LiDAR, Radar, Acoustic) running continuously to track geometry, motion, and behavior.
-2.  **Identity Layer (Integrated):** Visual/biometric sensors that are capable of 24/7 operation but are strictly **policy-driven** and **hardware-isolated**.
+**Identification (Configurable):** Determining *who* a specific individual is. Traditionally requires imagery but is an episodic or continuous query depending on user configuration. AEGIS-MESH supports both — episodic identification triggered by the sensing layer, or continuous visual recording if the user configures it.
 
 ### The Hybrid Node Strategy
 
-Different areas of a home have different sensing requirements. AEGIS-MESH uses three distinct node classes:
+Three node classes compose the mesh:
 
-1.  **Choke Point Nodes (Low Cost / High Value)**
-    *   **Location:** Doorways, hallways, stair entries.
-    *   **Hardware:** Cheap sensors (PIR + 1D Time-of-Flight or simple mmWave presence).
-    *   **Role:** Binary logic—"Did something pass?" These are information bottlenecks. Knowing who passed where provides immense tracking value with minimal hardware cost.
+**1. Choke Point Nodes (Low Cost / High Value)**
+- Location: Doorways, hallways, stair entries
+- Hardware: PIR + 1D ToF or simple mmWave presence
+- Role: Binary detection — "Did something pass?"
 
-2.  **Volume Nodes (Rich Sensing)**
-    *   **Location:** Living rooms, bedrooms, open kitchens.
-    *   **Hardware:** Solid-State LiDAR + mmWave Radar + Microphone Arrays.
-    *   **Role:** Tracking *position* and *geometry* within the space. They handle the "Where exactly are they?" and "What is the shape of the room?" questions.
+**2. Volume Nodes (Rich Sensing)**
+- Location: Living rooms, bedrooms, open kitchens
+- Hardware: Solid-state LiDAR + mmWave Radar + Microphone Arrays
+- Role: Position and geometry tracking
 
-3.  **Identity Nodes (Configurable Policy)**
-    *   **Location:** Entry points or specific verification zones.
-    *   **Hardware:** **Configurable Visual/Biometric Sensor** (Resolution and capabilities determined by research needs).
-    *   **Role:** Identification (Who is this?). These nodes can operate in **Privacy-First mode** (disabled) or **Security-First mode** (automatically triggered by the Sensing Layer).
+**3. Identity Nodes (Configurable)**
+- Location: Entry points or verification zones
+- Hardware: Configurable visual/biometric sensor (all specifications research-determined)
+- Role: Identification — "Who is this?"
+- Mode A — Passive: Triggered only when the sensing layer detects an anomaly
+- Mode B — Active: Continuous visual recording per user configuration
+- Privacy controls: Software-based (scheduling, activity triggers) and/or optional hardware switches per user preference
 
 ---
 
 ## Sensing Stack
 
-The sensing stack is layered to balance power consumption against information fidelity.
-
 ```
-┌──────────────────────────────────────────────────────────────┐
-│                   AEGIS-MESH Sensing Stack                   │
-├──────────────────────────────────────────────────────────────┤
-│  Always-On Layer (Low Power)                                 │
-│  ────────────────────────────                                │
-│  mmWave radar (presence, gross motion, through-wall)         │
-│  PIR (binary motion trigger at choke points)                 │
-│  Acoustic (Full Echo profiles for material/event classification) │
-├──────────────────────────────────────────────────────────────┤
-│  Event-Triggered Layer (High Fidelity)                       │
-│  ───────────────────────────────────────                     │
-│  Solid-state LiDAR (geometry, precise tracking)              │
-│  Neuromorphic Event Sensors (microsecond motion detection)   │
-├──────────────────────────────────────────────────────────────┤
-│  Identity Layer (Policy-Driven)                              │
-│  ───────────────────────────                                 │
-│  Configurable Visual / Biometric Module                      │
-│  Modes: Passive (Privacy) OR Automatic (Sensing-Triggered)   │
-│  Hardware Kill Switch REQUIRED on all Identity Nodes         │
-└──────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                         AEGIS-MESH Sensing Stack                             │
+├──────────────────────────────────────────────────────────────────────────────┤
+│  Always-On Layer (Low Power)                                                 │
+│  mmWave radar (presence, gross motion, through-wall, micro-Doppler)          │
+│  PIR (binary motion trigger at choke points)                                 │
+│  Acoustic (Full Echo profiles: material/event classification, DOA)           │
+│  1D ToF (choke-point ranging)                                                │
+│  Environmental (temperature, humidity, pressure, VOC, PM2.5)                 │
+├──────────────────────────────────────────────────────────────────────────────┤
+│  Event-Triggered High-Fidelity Layer                                         │
+│  Solid-state LiDAR (3D point cloud, geometry, tracking at 10–50 Hz)          │
+│  Neuromorphic Event Cameras (microsecond-latency motion trigger)             │
+├──────────────────────────────────────────────────────────────────────────────┤
+│  Visual Capture Layer (User-Configured — Any Node)                           │
+│  Conventional cameras at any resolution and configuration                    │
+│  Continuous recording, activity-triggered recording, or metadata-only        │
+│  Live streaming to companion app                                              │
+│  Full raw video storage for evidence, review, and SLAM                        │
+│  360° multi-camera arrays on Identity Nodes (research variant)               │
+└──────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Sensor Fusion & Physics
+### Sensor Fusion and Physics
 
-A core research contribution of AEGIS-MESH is the fusion of complementary modalities to create a "Physics-Based Identification" system that works where cameras fail.
+**LiDAR vs. Full Echo Acoustic:**
+- LiDAR provides high-resolution surface geometry but fails in smoke, fog, steam.
+- Full Echo Acoustic analyzes the entire reflected sound waveform. It penetrates smoke/fog and reveals material density (glass break vs. plastic drop, wood vs. ceramic).
+- Together: LiDAR for shape, Acoustic for material classification and robustness.
 
-*   **LiDAR vs. Full Echo Acoustic:**
-    *   **LiDAR** provides high-resolution **surface geometry** but fails in smoke, fog, or steam. It creates a precise "skeleton" of the room and objects.
-    *   **Full Echo Acoustic** analyzes the *entire* reflected sound waveform. It penetrates smoke/fog and reveals **material density** (e.g., distinguishing a glass break from a plastic drop) and **internal structure**.
-    *   **Fusion Logic:** The system uses LiDAR for shape and Acoustic for material classification/robustness. Together, they identify objects ("Human holding a glass") without imagery.
-
-*   **Event-Based Triggering:**
-    *   Neuromorphic event cameras have microsecond latency but lower spatial resolution. They act as a "trigger," waking up the LiDAR for a high-res scan only when rapid motion is detected, saving power and optimizing bandwidth.
-
----
-
-## Identity Layer & Policy Engine
-
-Cameras are strictly **excluded** from the primary sensing mesh to preserve the privacy and robustness advantages of the non-imaging core. However, AEGIS-MESH supports flexible operational modes through a **Policy Engine**:
-
-1.  **Privacy-First Mode (Passive):**
-    *   **Configuration:** Identity Layer is dormant. Sensing Layer tracks anonymous geometry.
-    *   **Trigger:** User manually requests identification via app/dashboard.
-    *   **Use Case:** Privacy-sensitive residential environments.
-
-2.  **Security-First Mode (Automatic Triggering):**
-    *   **Configuration:** Identity Layer is in "Standby."
-    *   **Trigger:** The Sensing Layer detects a track that meets specific criteria (e.g., "Unknown Object," "Motion in Restricted Zone").
-    *   **Action:** The Policy Engine automatically wakes the Identity Node.
-    *   **Result:** The camera activates, identifies the subject, and updates the track label (e.g., "Unknown Person").
-    *   **Use Case:** 24/7 Security monitoring, automated alerting, perimeter defense.
-
-**Architectural Safeguards:**
-*   **Hardware Kill Switch:** Every Identity Node features a physical switch that cuts power to the sensor. This overrides all software policies.
-*   **Isolation:** Identity nodes run on separate physical hardware links from the mesh.
-*   **No Constraints on Specs:** The visual sensor is **configurable**. The architecture supports research into various optical setups (FOV, resolution, frame rate) depending on the processing power available.
+**Event-Based Triggering:**
+- Event cameras have microsecond latency, acting as a trigger to wake LiDAR for a high-res scan only when rapid motion is detected.
+- Saves power. Optimizes bandwidth. Provides microsecond-scale detection timestamps.
 
 ---
 
-## Auto-Calibration and Self-Mapping
+## Node Classes — All Variants
 
-Manual coordinate entry is a barrier to adoption. AEGIS-MESH includes a **Walk-Through Auto-Calibration** mode:
+### Always-On Node
 
-1.  **Activation:** User enables "Calibration Mode" in the companion app.
-2.  **The Walk:** The user walks a defined path through the home (30-60 seconds).
-3.  **Trilateration:** Multiple nodes detect the user simultaneously. The system uses the user's continuous motion as a known reference signal to trilaterate the exact position of every node.
-4.  **Occlusion Mapping:** As the user walks, the system records which nodes can "see" which areas, automatically generating an empirical occlusion map.
-5.  **Dynamic Remapping:** If furniture is moved, the system detects new blind spots during normal operation and flags them for the user, suggesting placement adjustments.
+**Variant A — Choke Point**
+- PIR + 1D ToF + MCU + Mesh Radio
+- Lowest power, lowest cost
+- Binary detection at doorways
 
-*See `software/edge_controller/calibration.py` for implementation details.*
+**Variant B — Volume Presence**
+- mmWave Radar + Microphone Array + Environmental + MCU + Mesh Radio
+- Full presence and acoustic classification
+- No camera, no LiDAR
+
+**Variant C — Volume Presence + Acoustic**
+- All of Variant B + higher-density microphone array (6-element)
+- Enhanced acoustic material classification and DOA
+
+**Variant D — Volume Presence + Optional Camera**
+- All of Variant B + optional camera module (user-configured)
+- Camera connected via configurable interface (MIPI CSI, USB)
+- Local storage on-node SD card
+- Live streaming to companion app
+
+**All always-on variants:**
+- Camera-free primary sensing architecture
+- Acoustic processing on-MCU
+- Raw audio storage and streaming user-configurable
+- No mandatory camera prohibition — if user adds camera to any variant, it is fully supported
+
+### LiDAR Node
+
+**Variant A — Basic LiDAR**
+- Solid-state LiDAR (Livox MID-360 class) + event camera (trigger) + MCU + Mesh
+- Event-triggered activation for power efficiency
+
+**Variant B — Full LiDAR**
+- Solid-state LiDAR + event camera + mmWave radar + MCU + Mesh
+- Dual modality for fog/smoke robustness
+
+**Variant C — LiDAR + Camera**
+- All of Variant B + conventional camera (high resolution, configurable)
+- Full SLAM capability (LiDAR + visual odometry from camera)
+- 360° camera array variant available (4 cameras covering hemisphere)
+
+**Variant D — LiDAR + 360° Camera**
+- All of Variant B + 4–8 camera array covering full 360° hemisphere
+- Room-scale 360° video capture at ceiling mount position
+- Dense SLAM with 360° visual coverage
+- This is the most capable and most expensive variant
+- Best suited for open-plan spaces requiring full room coverage
+
+### Identity Node
+
+**Variant A — Metadata-Only (Default)**
+- Configurable camera/biometric sensor
+- On-device inference
+- Metadata transmission only (classification tags)
+- No local storage by default
+
+**Variant B — Local Storage**
+- All of Variant A + SD card
+- Raw video, clips, and metadata stored locally
+- User accesses recordings via companion app or physical SD removal
+
+**Variant C — App Streaming + Storage**
+- All of Variant B + Wi-Fi streaming
+- Live footage available in companion app
+- Full recordings library
+
+**Variant D — Multi-Camera Array**
+- Multiple cameras at configurable angles
+- 360° coverage of entry point or verification zone
+- All camera streams stored and available
+
+**Privacy controls (all user-configured — none mandatory):**
+- Hardware power switch (user-installed optional — cuts camera power rail)
+- Software activity scheduling (camera active only during away mode, etc.)
+- Trigger-based activation (sensing layer triggers camera)
+- Continuous recording
+- Any combination of the above
+
+**No mandatory hardware kill switch requirement.** The architecture supports hardware switches for users who want them. It also fully supports software-only privacy controls for users who prefer flexibility. Jurisdiction-specific legal requirements are the deployer's responsibility.
 
 ---
 
-## Node Placement (Geometry-Driven)
+## Software Architecture
 
-The system optimizes for **resilience to layout change** rather than brute-force redundancy.
-
-1.  **One-time mapping pass:** A mobile LiDAR (or temporary node) scans the empty home.
-2.  **Coverage Solver:** An algorithm computes the minimum set of fixed-node placements to observe every voxel of interest.
-3.  **Layered placement:**
-    *   **Ceiling-corner nodes** (primary geometry, ~70% of coverage).
-    *   **Low-angle nodes** (20-50 cm above floor) to catch under-furniture occlusions.
-    *   **Choke-point nodes** at doorways/hallways.
-
----
-
-## Privacy & Connectivity Architecture
-
-AEGIS-MESH is designed to be private by architecture, but flexible in connectivity.
-
-### Connectivity Agnostic (Local-First, Cloud-Ready)
-The system operates fully offline. It does not *require* internet to function. However, it is architected for integration:
-
-*   **API-Ready:** The edge controller exposes secure API endpoints. Users can integrate the system with Home Assistant, OpenHAB, or custom cloud dashboards.
-*   **User-Controlled Egress:** The decision to expose data to the internet is strictly the user's. The default configuration blocks external traffic; the user must explicitly enable remote access.
-*   **No Raw Sensor Egress by Default:** Only metadata (track positions, event types) leaves the node. No point clouds, audio waveforms, or images traverse the mesh network unless configured for specific analytics pipelines.
-
-### Security
-*   **Audit Logs.** Every metadata egress event is logged in an append-only local log.
-*   **Reproducible Builds.** Users can verify their nodes run the published code.
-
----
-
-## Repository Layout
-
-This repository follows a Full Stack Hardware Documentation Framework.
+### Crate Structure
 
 ```
 aegis-mesh/
+├── crates/
+│   ├── aegis-core/              # Shared types, node/zone/event definitions
+│   ├── aegis-perception/        # Per-node sensor pipelines (OMNI-SENSE based)
+│   ├── aegis-fusion/            # Multi-node detection fusion (CI + JPDA)
+│   ├── aegis-tracking/          # PentaTrack bridge, track management
+│   ├── aegis-slam/              # Dense SLAM, 360° stitching, world model
+│   ├── aegis-placement/         # Node placement optimization (coverage solver)
+│   ├── aegis-calibration/       # Walk-through and automated calibration
+│   ├── aegis-policy/            # Policy engine (Privacy-First / Security-First / Away)
+│   ├── aegis-mesh-protocol/     # Mesh network protocol, message signing
+│   ├── aegis-storage/           # Recording management, retention, export
+│   ├── aegis-api/               # Companion app REST/WebSocket/media server
+│   ├── aegis-alerts/            # Alert classification and routing
+│   └── aegis-edge-controller/   # Main binary: runs on the edge controller
+├── firmware/                    # Embedded firmware for each node class
+│   └── src/bin/
+│       ├── always_on_node.rs
+│       ├── lidar_node.rs
+│       └── identity_node.rs
+├── hardware/                    # PCB schematics, BOMs, test jig
+│   ├── schematic/
+│   │   ├── always_on_node/      # All variants
+│   │   ├── lidar_node/          # All variants including 360° camera
+│   │   └── identity_node/       # All variants, optional hardware switch
+│   ├── testing/
+│   │   └── test_jig_pcb/
+│   └── hardware_config.md
+├── apps/                        # Companion app architecture and API spec
+├── scenarios/                   # Deployment scenarios (TOML)
 ├── docs/
 │   ├── guides/
 │   │   ├── getting_started.md
 │   │   ├── node_placement_guide.md
 │   │   └── adaptive_remap.md
 │   ├── theory/
-│   │   ├── camera_free_sensing.md      # Architectural argument (Sensing vs ID)
-│   │   ├── sensor_fusion.md           # LiDAR vs Acoustic Physics
+│   │   ├── sensing_vs_identification.md
+│   │   ├── sensor_fusion.md
 │   │   ├── occlusion_driven_placement.md
-│   │   └── privacy_threat_model.md
+│   │   ├── privacy_threat_model.md
+│   │   ├── coverage_geometry.md
+│   │   ├── mast_elevation_analysis.md
+│   │   ├── future_research.md
+│   │   └── sensing_vs_identification.md
 │   ├── api/
-│   └── assets/
-├── hardware/
-│   ├── schematic/
-│   │   ├── always_on_node/            # mmWave + PIR + MCU + audio
-│   │   ├── lidar_node/                # solid-state LiDAR + event sensor
-│   │   └── identity_node/             # Camera/Biometric (Policy-Driven)
-│   ├── gerbers/
-│   ├── bom/
-│   ├── assembly/
-│   ├── testing/
-│   └── hardware_config.md
-├── firmware/
-│   ├── src/
-│   │   ├── drivers/
-│   │   ├── logic/                     # Event detection, classification
-│   │   └── main.c
-│   ├── bootloader/
-│   ├── tools/
-│   ├── platformio.ini
-│   └── firmware.md
-├── software/
-│   ├── edge_controller/
-│   │   ├── main.py
-│   │   ├── calibration.py             # Walk-through auto-calibration
-│   │   └── penta_track_integration.py
-│   ├── desktop/                       # Electron config / monitoring app
-│   ├── mobile/                        # iOS / Android local app
-│   ├── web/                           # Local web dashboard
-│   ├── cli/                           # Power-user tools
-│   ├── sdk/                           # Python / JS bindings
-│   ├── protocol/
-│   │   └── protocol_spec.md           # Mesh protocol (signed, user-config scope)
-│   └── software.md
+│   │   └── api_spec.md
+│   └── protocol/
+│       └── protocol_spec.md
 ├── mechanical/
-│   ├── cad/                           # Wall / ceiling / corner enclosures
+│   ├── cad/
 │   ├── stl/
 │   ├── drawings/
 │   └── mechanical_spec.md
 ├── production/
 │   ├── sop/
-│   ├── quality/
-│   └── packaging/
+│   └── quality/
 ├── legal/
-│   ├── certifications/
-│   ├── licenses/
 │   ├── compliance.md
 │   ├── research_ethics.md
 │   └── tos_compliance.md
@@ -241,33 +255,217 @@ aegis-mesh/
 
 ---
 
-## Quick Start
+## Policy Engine
+
+Four operational modes:
+
+| Mode | Always-On / LiDAR | Identity Node |
+|---|---|---|
+| **Privacy-First (default)** | Active, metadata-only | Off or metadata-only |
+| **Security-First** | Active | Activates on trigger events |
+| **Away** | Maximum sensitivity | Activates on trigger events; continuous recording if configured |
+| **Silent** | Record-only, no alerts | Follows configured recording policy |
+
+**Mode transitions:** Via companion app or API. All modes and Identity Node activation are user-configured. No mode automatically activates cameras without user having enabled that configuration.
+
+---
+
+## World Model Architecture
+
+AEGIS-MESH supports both sparse probabilistic and dense SLAM world models.
+
+### Sparse World Model (Mode A — Always Available)
+
+**Technology:** OMNI-SENSE → PentaTrack → Zone-anchored tracks
+
+**Output:** Per-zone tracked entities with position, velocity, trajectory, classification, and anomaly flags.
+
+**Visualization:** Floor-plan overlay with detection blobs, velocity vectors, zone alerts.
+
+**Use cases:** All real-time alerting, occupancy monitoring, presence detection.
+
+### Dense SLAM World Model (Mode B — Hardware Dependent)
+
+**Technology:** LiDAR point clouds + camera visual odometry → SLAM → 3D mesh + object recognition
+
+**Output:** Full 3D geometry of monitored spaces, objects classified and tracked in 3D context.
+
+**Visualization:** 3D walkthrough of the captured environment with entity trajectories and event annotations.
+
+**Use cases:** Forensic review, legal evidence preparation, architecture audit, precise occupancy mapping.
+
+**Hardware requirement:** Edge controller with Linux and sufficient compute (Raspberry Pi 4 class minimum). Point cloud + camera data from LiDAR + camera node variants.
+
+---
+
+## Auto-Calibration and Self-Mapping
+
+**Walk-Through Auto-Calibration:**
+1. User enables Calibration Mode in companion app.
+2. User walks a defined path through the home (30–60 seconds).
+3. Multiple nodes detect the user simultaneously. System trilaterates exact node positions.
+4. Occlusion map generated automatically — records which nodes observe which areas.
+5. Dynamic remapping: if furniture moves, new blind spots flagged and placement adjustments suggested.
+
+---
+
+## Coverage Geometry Analysis
+
+AEGIS-MESH includes a full coverage analysis engine:
+
+- **Horizon calculation:** Earth-curvature-corrected sensor horizon per node height.
+- **Shadow cone analysis:** Identifies blind zones beneath each mast/node.
+- **LOS ray marching:** Per-voxel line-of-sight quality from each node.
+- **Placement optimizer:** Greedy submodular solver for optimal placement.
+- **Pareto frontier:** Coverage vs. cost optimization for any budget.
+- **Robustness analysis:** Coverage degradation curves under node failure scenarios.
 
 ```bash
-# Clone
-git clone https://github.com/<user>/aegis-mesh.git
-cd aegis-mesh
-
-# Flash a node
-cd firmware
-pio run -e always_on_node -t upload
-
-# Run the edge controller
-cd ../software/edge_controller
-docker compose up
-
-# Open the local dashboard
-open http://aegis-mesh.local
+cargo run -p aegis-edge-controller -- analyze-coverage --scenario scenarios/my_home.toml
 ```
 
-The edge controller will auto-discover nodes, prompt for a **walk-through calibration**, and produce a placement report.
+---
+
+## Data Storage and Companion App
+
+### Storage Architecture
+
+All node classes support local data storage:
+- microSD card (removable, up to 2 TB) — raw video, point clouds, audio, metadata
+- Internal flash — logs, metadata, compressed clips
+- Edge controller storage — aggregated from all nodes
+- Network attached storage (NAS) — optional via edge controller
+
+### Data Handling Configuration (`aegis-mesh.toml`)
+
+```toml
+[data_handling]
+store_raw_video = false              # Enable raw video storage from Identity/LiDAR nodes
+store_raw_audio = false              # Enable raw audio storage from acoustic nodes
+store_raw_sensor_data = false        # Enable raw radar/LiDAR data storage
+storage_target = "internal"          # "sd_card" | "internal" | "network_path" | "companion_app"
+retention_days = 30                  # 0 = keep forever
+enable_app_streaming = false         # Stream to companion app
+continuous_recording = false         # Record continuously vs on-trigger
+recording_trigger = "on_detection"   # "always" | "on_detection" | "on_alert" | "manual"
+max_storage_mb = 0                   # 0 = unlimited
+```
+
+### Companion App
+
+Mobile (iOS/Android) and desktop (Windows/macOS/Linux) apps connect to the edge controller's embedded API server.
+
+**Features:**
+- Live detection map (floor-plan overlay with zone activity)
+- Live video/audio streams from any configured node
+- 360° panoramic view from nodes with multi-camera arrays
+- 3D world model viewer (dense SLAM mode)
+- Full recordings library with playback, search, and timeline
+- Gait analytics and event history
+- Zone activity statistics and heatmaps
+- System configuration and node management
+- Legal export with cryptographic integrity chain
+
+See `apps/README.md` for full API and architecture.
+
+---
+
+## Privacy and Connectivity Architecture
+
+### Local-First, Cloud-Ready
+
+- Operates fully offline. No internet required.
+- API-ready: Exposes secure endpoints for Home Assistant, OpenHAB, or custom dashboards.
+- User-controlled egress: default configuration blocks external traffic; user must explicitly enable remote access.
+
+### Security
+
+- Message signing: HMAC-SHA256 on all mesh protocol messages.
+- Audit logs: All data access and configuration changes logged locally.
+- Reproducible builds: Users can verify nodes run published code.
+- TLS optional for local API, recommended for remote access.
+
+### Privacy by Architecture — Sensing Layer
+
+The Always-On and LiDAR node firmware binaries have no dependency on `omni-sense-drivers-camera`. These nodes cannot produce imagery — the privacy property is structural and compile-time enforced. Users who want camera capability on these nodes must explicitly add the camera dependency and configure it.
+
+### Privacy by Configuration — Identity Layer
+
+Identity nodes support any data handling mode the user configures. There is no system-imposed restriction on what users capture on their own property. Jurisdiction-specific recording consent laws are the deployer's responsibility.
+
+---
+
+## Node Placement Geometry
+
+**Geometry-driven placement (not brute-force redundancy):**
+
+1. One-time mapping pass (mobile LiDAR scan or temporary node)
+2. Coverage solver: minimum node placements to observe every voxel of interest
+3. Layered placement:
+   - Ceiling-corner nodes (primary geometry, ~70% of coverage)
+   - Low-angle nodes (20–50 cm above floor) for under-furniture coverage
+   - Choke-point nodes at doorways/hallways
+
+---
+
+## Time Synchronization
+
+All nodes share clock via:
+- Mesh protocol timestamp broadcast (edge controller as time master)
+- Per-node `omni-sense-time::ClockOffsetEstimator` for drift tracking
+- Heartbeat at 100 ms intervals; nodes missing 3 consecutive heartbeats flagged offline
+
+---
+
+## Configuration
+
+```toml
+[deployment]
+building_floor_count = 1
+floor_height_m = 2.7
+total_area_m2 = 120.0
+
+[policy]
+default_mode = "PrivacyFirst"
+auto_away_after_minutes = 30
+alert_cooldown_s = 60.0
+
+[mesh_network]
+protocol = "wifi"
+edge_controller_address = "192.168.1.100:8080"
+heartbeat_interval_ms = 100
+message_signing = true
+
+[data_handling]
+store_raw_video = false
+store_raw_audio = false
+retention_days = 30
+enable_app_streaming = false
+recording_trigger = "on_detection"
+
+[companion_app]
+enabled = true
+api_port = 8080
+media_port = 9090
+enable_remote_access = false
+```
+
+---
+
+## Getting Started
+
+```bash
+git clone https://github.com/ungatedminds/aegis-mesh
+cd aegis-mesh
+cargo build --workspace
+cargo test --workspace
+cargo run -p aegis-edge-controller -- analyze-coverage --scenario scenarios/example_home.toml
+cargo run -p aegis-edge-controller -- --simulated --scenario scenarios/example_home.toml
+cd firmware && cargo build --target thumbv7em-none-eabihf --bin always_on_node --release
+```
 
 ---
 
 ## License
 
-This project uses a split license to protect the open-source nature of the work while ensuring hardware reciprocity:
-
-*   **Code (Software/Firmware):** [MIT License](LICENSE).
-*   **Hardware (Schematics/PCB):** [CERN Open Hardware Licence Version 2 - Strongly Reciprocal](LICENSE). This ensures that anyone manufacturing hardware based on these designs must release their modifications.
-*   **Documentation:** [CC BY 4.0](LICENSE).
+MIT for code. CERN-OHL-S v2 for hardware. CC BY 4.0 for documentation.
