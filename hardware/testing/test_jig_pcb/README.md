@@ -601,6 +601,69 @@ minimum_overall_score = 0.95
 }
 ```
 
+### 7.3 LiDAR 360° Variant Result Example
+
+```json
+{
+  "serial": "AEG-LD360-00007",
+  "unit_type": "LiDARNode_360",
+  "firmware_rev": "v1.0.0",
+  "test_timestamp_utc": "2024-03-15T14:40:00.000Z",
+  "tests": [
+    {
+      "name": "Power_Rails",
+      "status": "PASS",
+      "value": {"vcc_3v3": 3.30, "v_cams": 2.85, "v_isp": 1.82}
+    },
+    {
+      "name": "Mesh_PoE_Connectivity",
+      "status": "PASS",
+      "latency_ms": 32
+    },
+    {
+      "name": "LiDAR_Depth_Accuracy",
+      "status": "PASS",
+      "distance_m": 1.02,
+      "error_cm": 2.1
+    },
+    {
+      "name": "Event_Sensor_Response",
+      "status": "PASS",
+      "detection_latency_us": 820
+    },
+    {
+      "name": "Camera_Array_Initialization",
+      "status": "PASS",
+      "cameras_found": 8,
+      "expected": 8
+    },
+    {
+      "name": "FSYNC_Synchronization",
+      "status": "PASS",
+      "max_jitter_us": 0.8,
+      "all_cameras_synced": true
+    },
+    {
+      "name": "360_Stitching_Quality",
+      "status": "PASS",
+      "seam_error_px": 2.1,
+      "stitching_latency_ms": 85
+    },
+    {
+      "name": "SLAM_Integration",
+      "status": "PASS",
+      "point_cloud_fused": true,
+      "loop_closure_detected": true
+    },
+    {
+      "name": "IP67_Submersion",
+      "status": "PASS"
+    }
+  ],
+  "final_result": "PASS"
+}
+```
+
 ---
 
 ## 8. Dashboard Interface
